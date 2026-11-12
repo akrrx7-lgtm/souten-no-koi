@@ -1,0 +1,54 @@
+name: Deploy Souten no Koi to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract game files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          for part in souten_assets_part_01.zip souten_assets_part_02.zip souten_assets_part_03.zip souten_assets_part_04.zip; do
+            test -f "$part"
+            unzip -oq "$part" -d site
+          done
+          test -f site/index.html
+          test -f site/.nojekyll
+          test "$(find site/assets -type f | wc -l | tr -d ' ')" -eq 167
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
