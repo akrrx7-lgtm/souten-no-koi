@@ -1,0 +1,40 @@
+name: Validate Soten no Koi v68.4
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [test-v684]
+    paths:
+      - 'souten_v684_test_*.bin'
+      - '.github/workflows/test-v684.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+      - name: Reassemble and validate ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          for n in 01 02 03 04; do
+            test -s "souten_v684_test_${n}.bin"
+          done
+          cat souten_v684_test_{01,02,03,04}.bin > /tmp/v684.zip
+          echo 'b9d184722e91abe4a0697ca7bbf15569d66a6893b44cd973075e8e1c7a7b8372  /tmp/v684.zip' | sha256sum -c -
+          unzip -tq /tmp/v684.zip
+          mkdir -p preview
+          unzip -q /tmp/v684.zip -d preview
+          test -s preview/index.html
+          test -d preview/assets/images
+          echo "Images: $(find preview/assets/images -type f | wc -l)"
+      - name: Upload validation files for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: souten-v684-validation
+          path: preview/
+          retention-days: 7
