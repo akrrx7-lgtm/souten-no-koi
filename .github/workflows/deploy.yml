@@ -30,6 +30,9 @@ jobs:
             test -f "$part"
             unzip -oq "$part" -d site
           done
+          cat souten_v683_small_*.bin > /tmp/souten_v683_update.zip
+          unzip -tq /tmp/souten_v683_update.zip
+          unzip -oq /tmp/souten_v683_update.zip -d site
           test -f site/index.html
           test -f site/.nojekyll
           test "$(find site/assets -type f | wc -l | tr -d ' ')" -eq 167
